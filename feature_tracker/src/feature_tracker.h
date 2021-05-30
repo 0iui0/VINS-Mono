@@ -22,15 +22,15 @@ using namespace Eigen;
 
 bool inBorder(const cv::Point2f &pt);
 
-void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
-void reduceVector(vector<int> &v, vector<uchar> status);
+void reduceVector(vector <cv::Point2f> &v, vector <uchar> status);
 
-class FeatureTracker
-{
-  public:
+void reduceVector(vector<int> &v, vector <uchar> status);
+
+class FeatureTracker {
+public:
     FeatureTracker();
 
-    void readImage(const cv::Mat &_img,double _cur_time);
+    void readImage(const cv::Mat &_img, double _cur_time);
 
     void setMask();
 
@@ -49,10 +49,10 @@ class FeatureTracker
     cv::Mat mask;
     cv::Mat fisheye_mask;
     cv::Mat prev_img, cur_img, forw_img;
-    vector<cv::Point2f> n_pts;
-    vector<cv::Point2f> prev_pts, cur_pts, forw_pts;
-    vector<cv::Point2f> prev_un_pts, cur_un_pts;
-    vector<cv::Point2f> pts_velocity;
+    vector <cv::Point2f> n_pts;
+    vector <cv::Point2f> prev_pts, cur_pts, forw_pts;
+    vector <cv::Point2f> prev_un_pts, cur_un_pts;
+    vector <cv::Point2f> pts_velocity;
     vector<int> ids;
     vector<int> track_cnt;
     map<int, cv::Point2f> cur_un_pts_map;
