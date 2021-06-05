@@ -13,3 +13,5 @@ test/
 test.launch
 .vscode/
 .idea
+*cmake-build*
+.DS_Store
