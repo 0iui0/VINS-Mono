@@ -161,6 +161,7 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
     m_buf.lock();
     imu_buf.push(imu_msg);
     m_buf.unlock();
+    //唤醒process()线程，使其继续getMeasurements
     con.notify_one();
 
     last_imu_t = imu_msg->header.stamp.toSec();
@@ -190,6 +191,7 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {
     m_buf.lock();
     feature_buf.push(feature_msg);
     m_buf.unlock();
+    //唤醒process()线程，使其继续getMeasurements
     con.notify_one();
 }
 
@@ -231,7 +233,10 @@ void process() {
     {
         std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> measurements;
         std::unique_lock<std::mutex> lk(m_buf);
-        con.wait(lk, [&] { return (measurements = getMeasurements()).size() != 0; });
+        con.wait(lk, [&] {
+            // 若getMeasurements没有得到图像两帧之间的IMU，则返回false，线程阻塞；此时wait()会自动调用m_buf.unlock()释放锁；使得imu和feature的回调线程继续push
+            return (measurements = getMeasurements()).size() != 0;
+        });
         lk.unlock();    // 数据buffer的锁解锁，回调可以继续塞数据了
         m_estimator.lock(); // 进行后端求解，不能和复位重启冲突
         // 给予范围的for循环，这里就是遍历每组image imu组合
