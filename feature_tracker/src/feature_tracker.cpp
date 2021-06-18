@@ -79,10 +79,11 @@ void FeatureTracker::addPoints() {
  * 
  * @param[in] _img 输入图像
  * @param[in] _cur_time 图像的时间戳
- * 1、图像均衡化预处理
- * 2、光流追踪
- * 3、提取新的特征点（如果发布）
- * 4、所有特征点去畸变，计算速度
+ * 1、自适应局部直方图图像均衡化预处理--createCLAHE
+ * 2、光流追踪--calcOpticalFlowPyrLK
+ * 3、提取新的特征点（如果发布；用基础矩阵剔除异常点--rejectWithF
+ * 4、不在已有点附近提取--setMask
+ * 5、所有特征点去畸变，计算速度；提取Shi-Tomas角点--goodFeaturesToTrack
  */
 void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
     cv::Mat img;
@@ -91,7 +92,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
 
     if (EQUALIZE) {
         // 图像太暗或者太亮，提特征点比较难，所以均衡化一下
-        // ! opencv 函数看一下
+        // 1、自适应局部直方图图像均衡化预处理--createCLAHE
         cv::Ptr <cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         TicToc t_c;
         clahe->apply(_img, img);
@@ -115,7 +116,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
         vector <uchar> status;
         vector<float> err;
         // 调用opencv函数进行光流追踪
-        // Step 1 通过opencv光流追踪给的状态位剔除outlier
+        // 2、光流追踪--calcOpticalFlowPyrLK 通过opencv光流追踪给的状态位剔除outlier
         cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3);
 
         for (int i = 0; i < int(forw_pts.size()); i++)
@@ -135,10 +136,11 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
         n++;
 
     if (PUB_THIS_FRAME) {
-        // Step 3 通过对级约束来剔除outlier
+        // 3、提取新的特征点（如果发布），用基础矩阵剔除异常点--rejectWithF 通过对级约束来剔除outlier
         rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
+        // 4、不在已有点附近提取--setMask
         setMask();
         ROS_DEBUG("set mask costs %fms", t_m.toc());
 
@@ -154,6 +156,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
                 cout << "wrong size " << endl;
             // 只有发布才可以提取更多特征点，同时避免提的点进mask
             // 会不会这些点集中？会，不过没关系，他们下一次作为老将就得接受均匀化的洗礼
+            // 提取Shi-Tomas角点--goodFeaturesToTrack
             cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
         } else
             n_pts.clear();
