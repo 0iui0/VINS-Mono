@@ -17,9 +17,9 @@ Estimator estimator;
 
 std::condition_variable con;
 double current_time = -1;
-queue <sensor_msgs::ImuConstPtr> imu_buf;
-queue <sensor_msgs::PointCloudConstPtr> feature_buf;
-queue <sensor_msgs::PointCloudConstPtr> relo_buf;
+queue<sensor_msgs::ImuConstPtr> imu_buf;
+queue<sensor_msgs::PointCloudConstPtr> feature_buf;
+queue<sensor_msgs::PointCloudConstPtr> relo_buf;
 int sum_of_wait = 0;
 
 std::mutex m_buf;
@@ -95,7 +95,7 @@ void update() {
     acc_0 = estimator.acc_0;
     gyr_0 = estimator.gyr_0;
 
-    queue <sensor_msgs::ImuConstPtr> tmp_imu_buf = imu_buf;  // 遗留的imu的buffer，因为下面需要pop，所以copy了一份
+    queue<sensor_msgs::ImuConstPtr> tmp_imu_buf = imu_buf;  // 遗留的imu的buffer，因为下面需要pop，所以copy了一份
     for (sensor_msgs::ImuConstPtr tmp_imu_msg; !tmp_imu_buf.empty(); tmp_imu_buf.pop())
         // 得到最新imu时刻的可靠的位姿
         predict(tmp_imu_buf.front());
@@ -103,11 +103,8 @@ void update() {
 }
 
 // 获得匹配好的图像imu组
-std::vector <std::pair<std::vector < sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>>
-
-getMeasurements() {
-    std::vector < std::pair < std::vector < sensor_msgs::ImuConstPtr > , sensor_msgs::PointCloudConstPtr
-            >> measurements;
+std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> getMeasurements() {
+    std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> measurements;
 
     while (true) {
         if (imu_buf.empty() || feature_buf.empty())
@@ -132,7 +129,7 @@ getMeasurements() {
         sensor_msgs::PointCloudConstPtr img_msg = feature_buf.front();
         feature_buf.pop();
         // 一般第一帧不会严格对齐，但是后面就都会对齐，当然第一帧也不会用到
-        std::vector <sensor_msgs::ImuConstPtr> IMUs;
+        std::vector<sensor_msgs::ImuConstPtr> IMUs;
         while (imu_buf.front()->header.stamp.toSec() < img_msg->header.stamp.toSec() + estimator.td) {
             IMUs.emplace_back(imu_buf.front());
             imu_buf.pop();
@@ -169,7 +166,7 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
     last_imu_t = imu_msg->header.stamp.toSec();
 
     {
-        std::lock_guard <std::mutex> lg(m_state);
+        std::lock_guard<std::mutex> lg(m_state);
         predict(imu_msg);
         std_msgs::Header header = imu_msg->header;
         header.frame_id = "world";
@@ -232,12 +229,9 @@ void relocalization_callback(const sensor_msgs::PointCloudConstPtr &points_msg) 
 void process() {
     while (true)    // 这个线程是会一直循环下去
     {
-        std::vector < std::pair < std::vector < sensor_msgs::ImuConstPtr > , sensor_msgs::PointCloudConstPtr
-                >> measurements;
-        std::unique_lock <std::mutex> lk(m_buf);
-        con.wait(lk, [&] {
-            return (measurements = getMeasurements()).size() != 0;
-        });
+        std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> measurements;
+        std::unique_lock<std::mutex> lk(m_buf);
+        con.wait(lk, [&] { return (measurements = getMeasurements()).size() != 0; });
         lk.unlock();    // 数据buffer的锁解锁，回调可以继续塞数据了
         m_estimator.lock(); // 进行后端求解，不能和复位重启冲突
         // 给予范围的for循环，这里就是遍历每组image imu组合
@@ -263,9 +257,8 @@ void process() {
                     // 时间差和imu数据送进去
                     estimator.processIMU(dt, Vector3d(dx, dy, dz), Vector3d(rx, ry, rz));
                     //printf("imu: dt:%f a: %f %f %f w: %f %f %f\n",dt, dx, dy, dz, rx, ry, rz);
-
-                } else    // 这就是针对最后一个imu数据，需要做一个简单的线性插值
-                {
+                } else {
+                    // 这就是针对最后一个imu数据，需要做一个简单的线性插值
                     double dt_1 = img_t - current_time;
                     double dt_2 = t - img_t;
                     current_time = img_t;
@@ -287,14 +280,14 @@ void process() {
             // set relocalization frame
             // 回环相关部分
             sensor_msgs::PointCloudConstPtr relo_msg = NULL;
-            while (!relo_buf.empty())   // 取出最新的回环帧
-            {
+            // 取出最新的回环帧
+            while (!relo_buf.empty()) {
                 relo_msg = relo_buf.front();
                 relo_buf.pop();
             }
-            if (relo_msg != NULL)   // 有效回环信息
-            {
-                vector <Vector3d> match_points;
+            // 有效回环信息
+            if (relo_msg != NULL) {
+                vector<Vector3d> match_points;
                 double frame_stamp = relo_msg->header.stamp.toSec();    // 回环的当前帧时间戳
                 for (unsigned int i = 0; i < relo_msg->points.size(); i++) {
                     Vector3d u_v_id;
@@ -318,7 +311,7 @@ void process() {
 
             TicToc t_s;
             // 特征点id->特征点信息
-            map < int, vector < pair < int, Eigen::Matrix < double, 7, 1 >> >> image;
+            map<int, vector<pair<int, Eigen::Matrix<double, 7, 1 >> >> image;
             for (unsigned int i = 0; i < img_msg->points.size(); i++) {
                 int v = img_msg->channels[0].values[i] + 0.5;
                 int feature_id = v / NUM_OF_CAM;
