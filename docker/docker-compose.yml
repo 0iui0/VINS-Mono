@@ -1,0 +1,66 @@
+version: '2'
+
+networks:
+  ros:
+    driver: bridge
+
+services:
+  # ros-master:
+  #   image: ros:kinetic-ros-core
+  #   container_name: ros_master
+  #   command: stdbuf -o L roscore
+  #   networks:
+  #     - ros
+  #   restart: always
+
+  # viz:
+  #   image: ct2034/vnc-ros-kinetic-full
+  #   container_name: ros_visualizer
+  #   depends_on:
+  #     - ros-master
+  #   networks:
+  #     - ros
+  #   environment:
+  #     - "ROS_MASTER_URI=http://ros-master:11311"
+  #     - "ROS_HOSTNAME=viz"
+  #     - "VNC_PASSWORD=mypassword"
+  #   ports:
+  #     - "6080:80"
+  #     - "5900:5900"
+  #   volumes: 
+  #     - /Users/iouoi/ros/catkin_ws:/root/catkin_ws
+  # #  command: rviz -d /root/catkin_ws/src/VINS-Mono/config/vins_rviz_config.rviz
+  
+  # vins-mono:
+  #   image: ros:vins-mono
+  #   container_name: vins_mono
+  #   depends_on:
+  #     - ros-master
+  #     - viz
+  #   networks:
+  #     - ros
+  #   environment:
+  #     - "ROS_MASTER_URI=http://ros-master:11311"
+  #     - "ROS_HOSTNAME=vins-mono"
+  #   volumes: 
+  #     - /Users/iouoi/ros/catkin_ws/src/VINS-Mono:/root/catkin_ws/src/VINS-Mono
+  #   command: roslaunch vins_estimator euroc.launch
+
+  kinetic-dev:
+    image: ros:kinetic-dev-env
+    container_name: kinetic-dev-env
+    cap_add:
+      - sys_ptrace
+    # depends_on:
+    #   - ros-master
+    #   - viz
+    ports:
+      - "2222:22"
+    networks:
+      - ros
+    # environment:
+    #   - "ROS_MASTER_URI=http://ros-master:11311"
+    #   - "ROS_HOSTNAME=vins-mono"
+    # volumes: 
+    #   - /Users/iouoi/CLionProjects/VINS-Mono:/root/catkin_ws/src/VINS-Mono
+    command: /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config_test_ros   
