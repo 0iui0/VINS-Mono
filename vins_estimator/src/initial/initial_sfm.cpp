@@ -12,8 +12,11 @@ GlobalSFM::GlobalSFM() {}
  * @param[out] point_3d 三角化结果
  */
 
-void GlobalSFM::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
-                                 Vector2d &point0, Vector2d &point1, Vector3d &point_3d) {
+void GlobalSFM::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0,
+                                 Eigen::Matrix<double, 3, 4> &Pose1,
+                                 Vector2d &point0,
+                                 Vector2d &point1,
+                                 Vector3d &point_3d) {
     // 通过奇异值分解求解一个Ax = 0得到
     Matrix4d design_matrix = Matrix4d::Zero();
     design_matrix.row(0) = point0[0] * Pose0.row(2) - Pose0.row(0);
@@ -21,8 +24,7 @@ void GlobalSFM::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matr
     design_matrix.row(2) = point1[0] * Pose1.row(2) - Pose1.row(0);
     design_matrix.row(3) = point1[1] * Pose1.row(2) - Pose1.row(1);
     Vector4d triangulated_point;
-    triangulated_point =
-            design_matrix.jacobiSvd(Eigen::ComputeFullV).matrixV().rightCols<1>();
+    triangulated_point = design_matrix.jacobiSvd(Eigen::ComputeFullV).matrixV().rightCols<1>();
     // 齐次向量归一化
     point_3d(0) = triangulated_point(0) / triangulated_point(3);
     point_3d(1) = triangulated_point(1) / triangulated_point(3);
@@ -41,9 +43,9 @@ void GlobalSFM::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matr
  */
 
 bool GlobalSFM::solveFrameByPnP(Matrix3d &R_initial, Vector3d &P_initial, int i,
-                                vector <SFMFeature> &sfm_f) {
-    vector <cv::Point2f> pts_2_vector;
-    vector <cv::Point3f> pts_3_vector;
+                                vector<SFMFeature> &sfm_f) {
+    vector<cv::Point2f> pts_2_vector;
+    vector<cv::Point3f> pts_3_vector;
     for (int j = 0; j < feature_num; j++) {
         if (sfm_f[j].state != true) // 是false就是没有被三角化，pnp是3d到2d求解，因此需要3d点
             continue;
@@ -97,11 +99,12 @@ bool GlobalSFM::solveFrameByPnP(Matrix3d &R_initial, Vector3d &P_initial, int i,
  */
 void GlobalSFM::triangulateTwoFrames(int frame0, Eigen::Matrix<double, 3, 4> &Pose0,
                                      int frame1, Eigen::Matrix<double, 3, 4> &Pose1,
-                                     vector <SFMFeature> &sfm_f) {
+                                     vector<SFMFeature> &sfm_f) {
     assert(frame0 != frame1);
-    for (int j = 0; j < feature_num; j++)    // feature_num是特征点总数
-    {
-        if (sfm_f[j].state == true)    // 已经三角化过了
+    // feature_num是特征点总数
+    for (int j = 0; j < feature_num; j++) {
+        // 已经三角化过了
+        if (sfm_f[j].state == true)
             continue;
         bool has_0 = false, has_1 = false;
         Vector2d point0;
@@ -153,7 +156,7 @@ void GlobalSFM::triangulateTwoFrames(int frame0, Eigen::Matrix<double, 3, 4> &Po
 
 bool GlobalSFM::construct(int frame_num, Quaterniond *q, Vector3d *T, int l,
                           const Matrix3d relative_R, const Vector3d relative_T,
-                          vector <SFMFeature> &sfm_f, map<int, Vector3d> &sfm_tracked_points) {
+                          vector<SFMFeature> &sfm_f, map<int, Vector3d> &sfm_tracked_points) {
     feature_num = sfm_f.size();
     //cout << "set 0 and " << l << " as known " << endl;
     // have relative_r relative_t
@@ -211,7 +214,6 @@ bool GlobalSFM::construct(int frame_num, Quaterniond *q, Vector3d *T, int l,
             Pose[i].block<3, 3>(0, 0) = c_Rotation[i];
             Pose[i].block<3, 1>(0, 3) = c_Translation[i];
         }
-
         // triangulate point based on the solve pnp result
         // 当前帧和最后一帧进行三角化处理
         triangulateTwoFrames(i, Pose[i], frame_num - 1, Pose[frame_num - 1], sfm_f);
@@ -347,7 +349,8 @@ bool GlobalSFM::construct(int frame_num, Quaterniond *q, Vector3d *T, int l,
     }
     for (int i = 0; i < (int) sfm_f.size(); i++) {
         if (sfm_f[i].state)
-            sfm_tracked_points[sfm_f[i].id] = Vector3d(sfm_f[i].position[0], sfm_f[i].position[1],
+            sfm_tracked_points[sfm_f[i].id] = Vector3d(sfm_f[i].position[0],
+                                                       sfm_f[i].position[1],
                                                        sfm_f[i].position[2]);
     }
     return true;

@@ -103,6 +103,7 @@ void update() {
 }
 
 // 获得匹配好的图像imu组
+// 根据时间戳，挑选当前帧和上一帧图像之间的IMU数据，用于后续的IMU积分
 std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> getMeasurements() {
     std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> measurements;
 
@@ -126,6 +127,8 @@ std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointC
             continue;
         }
         // 此时就保证了图像前一定有imu数据
+        // imu     *********
+        // image    *   *
         sensor_msgs::PointCloudConstPtr img_msg = feature_buf.front();
         feature_buf.pop();
         // 一般第一帧不会严格对齐，但是后面就都会对齐，当然第一帧也不会用到
@@ -136,7 +139,7 @@ std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointC
         }
         // 保留图像时间戳后一个imu数据，但不会从buffer中扔掉
         // imu    *   *
-        // image    *
+        // image    *  （用两个imu的差值做image对应的imu）
         IMUs.emplace_back(imu_buf.front());
         if (IMUs.empty())
             ROS_WARN("no imu between two image");
@@ -229,8 +232,7 @@ void relocalization_callback(const sensor_msgs::PointCloudConstPtr &points_msg) 
 
 // thread: visual-inertial odometry
 void process() {
-    while (true)    // 这个线程是会一直循环下去
-    {
+    while (true) {    // 这个线程是会一直循环下去
         std::vector<std::pair<std::vector<sensor_msgs::ImuConstPtr>, sensor_msgs::PointCloudConstPtr>> measurements;
         std::unique_lock<std::mutex> lk(m_buf);
         con.wait(lk, [&] {

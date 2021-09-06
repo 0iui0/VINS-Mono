@@ -74,13 +74,12 @@ void PoseGraph::addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop) {
     } else {
         addKeyFrameIntoVoc(cur_kf);
     }
-    if (loop_index != -1)   // 代表找到了有效的回环帧
-    {
+    if (loop_index != -1) {   // 代表找到了有效的回环帧
         //printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
         KeyFrame *old_kf = getKeyFrame(loop_index); // 得到回环帧的指针
 
-        if (cur_kf->findConnection(old_kf)) // 如果确定两者回环
-        {
+        if (cur_kf->findConnection(old_kf)) { // 如果确定两者回环
+
             // 更新最早回环帧，用来确定全局优化的范围
             if (earliest_loop_index > loop_index || earliest_loop_index == -1)
                 earliest_loop_index = loop_index;
@@ -379,8 +378,7 @@ int PoseGraph::detectLoop(KeyFrame *keyframe, int frame_index) {
         cv::waitKey(20);
     }
 */
-    if (find_loop && frame_index > 50)  // 认为找到了回环并且当前帧是第50帧以后
-    {
+    if (find_loop && frame_index > 50) {  // 认为找到了回环并且当前帧是第50帧以后
         int min_index = -1;
         // 寻找得分大于0.015的idx最小的那个帧，这样可以尽可能调整更多帧的位姿
         for (unsigned int i = 0; i < ret.size(); i++) {
@@ -841,10 +839,10 @@ void PoseGraph::loadPoseGraph() {
         string keypoints_path = POSE_GRAPH_SAVE_PATH + to_string(index) + "_keypoints.txt";
         FILE *keypoints_file;
         keypoints_file = fopen(keypoints_path.c_str(), "r");
-        vector <cv::KeyPoint> keypoints;
-        vector <cv::KeyPoint> keypoints_norm;
+        vector<cv::KeyPoint> keypoints;
+        vector<cv::KeyPoint> keypoints_norm;
         // 记载特征点的像素坐标，归一化相机坐标和描述子
-        vector <BRIEF::bitset> brief_descriptors;
+        vector<BRIEF::bitset> brief_descriptors;
         for (int i = 0; i < keypoints_num; i++) {
             BRIEF::bitset tmp_des;
             brief_file >> tmp_des;

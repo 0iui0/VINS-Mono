@@ -48,13 +48,18 @@ public:
 
     cv::Mat mask;
     cv::Mat fisheye_mask;
+    // ?,上一帧图像,当前帧图像
     cv::Mat prev_img, cur_img, forw_img;
     vector <cv::Point2f> n_pts;
+    // ?,上一帧点的坐标,当前帧点的坐标
     vector <cv::Point2f> prev_pts, cur_pts, forw_pts;
     vector <cv::Point2f> prev_un_pts, cur_un_pts;
     vector <cv::Point2f> pts_velocity;
+    // 每个点的id号
     vector<int> ids;
+    // 每个点被跟踪的次数
     vector<int> track_cnt;
+    // 最新帧的归一化相机系坐标
     map<int, cv::Point2f> cur_un_pts_map;
     map<int, cv::Point2f> prev_un_pts_map;
     camodocal::CameraPtr m_camera;

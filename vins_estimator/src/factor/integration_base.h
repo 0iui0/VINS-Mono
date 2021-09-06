@@ -11,13 +11,26 @@ class IntegrationBase {
 public:
     IntegrationBase() = delete;
 
-    IntegrationBase(const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,
-                    const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg)
-            : acc_0{_acc_0}, gyr_0{_gyr_0}, linearized_acc{_acc_0}, linearized_gyr{_gyr_0},
-              linearized_ba{_linearized_ba}, linearized_bg{_linearized_bg},
-              jacobian{Eigen::Matrix<double, 15, 15>::Identity()}, covariance{Eigen::Matrix<double, 15, 15>::Zero()},
-              sum_dt{0.0}, delta_p{Eigen::Vector3d::Zero()}, delta_q{Eigen::Quaterniond::Identity()},
-              delta_v{Eigen::Vector3d::Zero()} {
+    IntegrationBase(const Eigen::Vector3d &_acc_0,
+                    const Eigen::Vector3d &_gyr_0,
+                    const Eigen::Vector3d &_linearized_ba,
+                    const Eigen::Vector3d &_linearized_bg) :
+            acc_0{_acc_0},
+            gyr_0{_gyr_0},
+            linearized_acc{_acc_0},
+            linearized_gyr{_gyr_0},
+            linearized_ba{_linearized_ba},
+            linearized_bg{_linearized_bg},
+            //a beta gama .. 对自身的积分
+            jacobian{Eigen::Matrix<double, 15, 15>::Identity()},
+            covariance{Eigen::Matrix<double, 15, 15>::Zero()},
+            sum_dt{0.0},
+            //alpha
+            delta_p{Eigen::Vector3d::Zero()},
+            //gama
+            delta_q{Eigen::Quaterniond::Identity()},
+            //beta
+            delta_v{Eigen::Vector3d::Zero()} {
         noise = Eigen::Matrix<double, 18, 18>::Zero();
         noise.block<3, 3>(0, 0) = (ACC_N * ACC_N) * Eigen::Matrix3d::Identity();
         noise.block<3, 3>(3, 3) = (GYR_N * GYR_N) * Eigen::Matrix3d::Identity();
@@ -59,6 +72,7 @@ public:
             propagate(dt_buf[i], acc_buf[i], gyr_buf[i]);
     }
 
+    // 更新IMU约束的协方差、Jacobian
     void midPointIntegration(double _dt,
                              const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,
                              const Eigen::Vector3d &_acc_1, const Eigen::Vector3d &_gyr_1,
@@ -149,7 +163,10 @@ public:
         Vector3d result_linearized_ba;
         Vector3d result_linearized_bg;
 
-        midPointIntegration(_dt, acc_0, gyr_0, _acc_1, _gyr_1, delta_p, delta_q, delta_v,
+        midPointIntegration(_dt,
+                            acc_0, gyr_0,
+                            _acc_1, _gyr_1,
+                            delta_p, delta_q, delta_v,
                             linearized_ba, linearized_bg,
                             result_delta_p, result_delta_q, result_delta_v,
                             result_linearized_ba, result_linearized_bg, 1);
@@ -218,8 +235,8 @@ public:
     Eigen::Vector3d delta_v;
 
     std::vector<double> dt_buf;
-    std::vector <Eigen::Vector3d> acc_buf;
-    std::vector <Eigen::Vector3d> gyr_buf;
+    std::vector<Eigen::Vector3d> acc_buf;
+    std::vector<Eigen::Vector3d> gyr_buf;
 
 };
 /*

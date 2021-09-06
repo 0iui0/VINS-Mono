@@ -26,8 +26,7 @@ bool InitialEXRotation::CalibrationExRotation(vector <pair<Vector3d, Vector3d>> 
         Quaterniond r2(Rc_g[i]);
 
         double angular_distance = 180 / M_PI * r1.angularDistance(r2);
-        ROS_DEBUG(
-                "%d %f", i, angular_distance);
+        ROS_DEBUG("%d %f", i, angular_distance);
         // 一个简单的核函数
         double huber = angular_distance > 5.0 ? 5.0 / angular_distance : 1.0;
         ++sum_ok;
@@ -89,11 +88,10 @@ Matrix3d InitialEXRotation::solveRelativeR(const vector <pair<Vector3d, Vector3d
         cv::Mat_<double> ans_R_cv = ratio1 > ratio2 ? R1 : R2;
 
         // 解出来的是R21
-
         Matrix3d ans_R_eigen;
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
-                ans_R_eigen(j, i) = ans_R_cv(i, j); // 这里转换成R12
+                ans_R_eigen(j, i) =  (i, j); // 这里转换成R12
         return ans_R_eigen;
     }
     return Matrix3d::Identity();

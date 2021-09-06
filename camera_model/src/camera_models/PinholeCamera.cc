@@ -422,7 +422,7 @@ namespace camodocal {
                 mx_u = mx_d - inv_denom_d * Dx_d;
                 my_u = my_d - inv_denom_d * Dy_d;
             } else
-                // 参考https://github.com/HKUST-Aerial-Robotics/VINS-Mono/issues/48
+                // 参考 https://github.com/HKUST-Aerial-Robotics/VINS-Mono/issues/48
             {
                 // Recursive distortion model
                 int n = 8;

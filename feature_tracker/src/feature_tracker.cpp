@@ -91,8 +91,8 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
     cur_time = _cur_time;
 
     if (EQUALIZE) {
-        // 图像太暗或者太亮，提特征点比较难，所以均衡化一下
-        // 1、自适应局部直方图图像均衡化预处理--createCLAHE
+        // 图像太暗或者太亮，提特征点比较难，所以均衡化一下;
+        // 1、自适应局部直方图图像均衡化预处理--createCLAHE；增强对比度；主要思想是将图像的直方图分布变成近似均匀分布
         cv::Ptr <cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         TicToc t_c;
         clahe->apply(_img, img);
@@ -116,7 +116,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
         vector <uchar> status;
         vector<float> err;
         // 调用opencv函数进行光流追踪
-        // 2、光流追踪--calcOpticalFlowPyrLK 通过opencv光流追踪给的状态位剔除outlier
+        // 2、光流追踪--calcOpticalFlowPyrLK 通过opencv光流追踪给的状态位剔除outlier；maxLevel=3 金字塔层数
         cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3);
 
         for (int i = 0; i < int(forw_pts.size()); i++)
@@ -156,7 +156,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
                 cout << "wrong size " << endl;
             // 只有发布才可以提取更多特征点，同时避免提的点进mask
             // 会不会这些点集中？会，不过没关系，他们下一次作为老将就得接受均匀化的洗礼
-            // 提取Shi-Tomas角点--goodFeaturesToTrack
+            // 5、提取Shi-Tomas角点--goodFeaturesToTrack
             cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
         } else
             n_pts.clear();
@@ -190,7 +190,7 @@ void FeatureTracker::rejectWithF() {
             Eigen::Vector3d tmp_p;
             // 得到相机归一化坐标系的值
             m_camera->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
-            // 这里用一个虚拟相机，原因同样参考https://github.com/HKUST-Aerial-Robotics/VINS-Mono/issues/48
+            // 这里用一个虚拟相机，原因同样参考 https://github.com/HKUST-Aerial-Robotics/VINS-Mono/issues/48
             // 这里有个好处就是对F_THRESHOLD和相机无关
             // 投影到虚拟相机的像素坐标系
             tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;

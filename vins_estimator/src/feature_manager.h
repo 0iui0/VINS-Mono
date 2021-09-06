@@ -46,7 +46,7 @@ class FeaturePerId {
 public:
     const int feature_id;
     int start_frame;
-    vector <FeaturePerFrame> feature_per_frame;  // 该id对应的特征点在每个帧中的属性
+    vector<FeaturePerFrame> feature_per_frame;  // 该id对应的特征点在每个帧中的属性
 
     int used_num;
     bool is_outlier;
@@ -56,10 +56,12 @@ public:
 
     Vector3d gt_p;
 
-    FeaturePerId(int _feature_id, int _start_frame)
-            : feature_id(_feature_id), start_frame(_start_frame),
-              used_num(0), estimated_depth(-1.0), solve_flag(0) {
-    }
+    FeaturePerId(int _feature_id, int _start_frame) :
+            feature_id(_feature_id),
+            start_frame(_start_frame),
+            used_num(0),
+            estimated_depth(-1.0),
+            solve_flag(0) {}
 
     int endFrame();
 };
@@ -74,15 +76,15 @@ public:
 
     int getFeatureCount();
 
-    bool addFeatureCheckParallax(int frame_count, const map<int, vector<pair < int, Eigen::Matrix < double, 7, 1>>
+    bool addFeatureCheckParallax(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>
 
     >> &image,
-    double td
+                                 double td
     );
 
     void debugShow();
 
-    vector <pair<Vector3d, Vector3d>> getCorresponding(int frame_count_l, int frame_count_r);
+    vector<pair<Vector3d, Vector3d>> getCorresponding(int frame_count_l, int frame_count_r);
 
     //void updateDepth(const VectorXd &x);
     void setDepth(const VectorXd &x);
@@ -104,7 +106,7 @@ public:
 
     void removeOutlier();
 
-    list <FeaturePerId> feature;
+    list<FeaturePerId> feature;
     int last_track_num;
 
 private:

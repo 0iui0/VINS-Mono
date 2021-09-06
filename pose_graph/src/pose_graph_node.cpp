@@ -25,10 +25,10 @@
 #define SKIP_FIRST_CNT 10
 using namespace std;
 
-queue <sensor_msgs::ImageConstPtr> image_buf;
-queue <sensor_msgs::PointCloudConstPtr> point_buf;
-queue <nav_msgs::Odometry::ConstPtr> pose_buf;
-queue <Eigen::Vector3d> odometry_buf;
+queue<sensor_msgs::ImageConstPtr> image_buf;
+queue<sensor_msgs::PointCloudConstPtr> point_buf;
+queue<nav_msgs::Odometry::ConstPtr> pose_buf;
+queue<Eigen::Vector3d> odometry_buf;
 std::mutex m_buf;
 std::mutex m_process;
 int frame_index = 0;
@@ -395,9 +395,9 @@ void process() {
                                      pose_msg->pose.pose.orientation.z).toRotationMatrix();
             if ((T - last_t).norm() > SKIP_DIS)  // 要求KF相隔必要的平移距离
             {
-                vector <cv::Point3f> point_3d;   // VIO世界坐标系下的地图点坐标
-                vector <cv::Point2f> point_2d_uv;   // 归一化相机坐标系的坐标
-                vector <cv::Point2f> point_2d_normal;    // 像素坐标
+                vector<cv::Point3f> point_3d;   // VIO世界坐标系下的地图点坐标
+                vector<cv::Point2f> point_2d_uv;   // 归一化相机坐标系的坐标
+                vector<cv::Point2f> point_2d_normal;    // 像素坐标
                 vector<double> point_id;    // 地图点的idx
                 // 遍历所有的地图点
                 for (unsigned int i = 0; i < point_msg->points.size(); i++) {
