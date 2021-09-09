@@ -27,8 +27,8 @@ bool init_pub = 0;
 
 // 图片的回调函数
 void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {
-    if (first_image_flag) // 对第一帧图像的基本操作
-    {
+    if (first_image_flag) { // 对第一帧图像的基本操作
+
         first_image_flag = false;
         first_image_time = img_msg->header.stamp.toSec();
         last_image_time = img_msg->header.stamp.toSec();
@@ -51,8 +51,7 @@ void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {
     last_image_time = img_msg->header.stamp.toSec();
     // frequency control
     // 控制一下发给后端的频率
-    if (round(1.0 * pub_count / (img_msg->header.stamp.toSec() - first_image_time)) <= FREQ)    // 保证发给后端的不超过这个频率
-    {
+    if (round(1.0 * pub_count / (img_msg->header.stamp.toSec() - first_image_time)) <= FREQ) {    // 保证发给后端的不超过这个频率
         PUB_THIS_FRAME = true;
         // reset the frequency control
         // 这段时间的频率和预设频率十分接近，就认为这段时间很棒，重启一下，避免delta t太大

@@ -10,7 +10,7 @@ bool inBorder(const cv::Point2f &pt) {
 }
 
 // 根据状态位，进行“瘦身”
-void reduceVector(vector <cv::Point2f> &v, vector <uchar> status) {
+void reduceVector(vector<cv::Point2f> &v, vector<uchar> status) {
     int j = 0;
     for (int i = 0; i < int(v.size()); i++)
         if (status[i])
@@ -18,7 +18,7 @@ void reduceVector(vector <cv::Point2f> &v, vector <uchar> status) {
     v.resize(j);
 }
 
-void reduceVector(vector<int> &v, vector <uchar> status) {
+void reduceVector(vector<int> &v, vector<uchar> status) {
     int j = 0;
     for (int i = 0; i < int(v.size()); i++)
         if (status[i])
@@ -39,7 +39,7 @@ void FeatureTracker::setMask() {
 
 
     // prefer to keep features that are tracked for long time
-    vector < pair < int, pair < cv::Point2f, int>>> cnt_pts_id;
+    vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
     for (unsigned int i = 0; i < forw_pts.size(); i++)
         cnt_pts_id.push_back(make_pair(track_cnt[i], make_pair(forw_pts[i], ids[i])));
@@ -53,7 +53,7 @@ void FeatureTracker::setMask() {
     ids.clear();
     track_cnt.clear();
 
-    for (auto &it : cnt_pts_id) {
+    for (auto &it: cnt_pts_id) {
         if (mask.at<uchar>(it.second.first) == 255) {
             // 把挑选剩下的特征点重新放进容器
             forw_pts.push_back(it.second.first);
@@ -67,7 +67,7 @@ void FeatureTracker::setMask() {
 
 // 把新的点加入容器，id给-1作为区分
 void FeatureTracker::addPoints() {
-    for (auto &p : n_pts) {
+    for (auto &p: n_pts) {
         forw_pts.push_back(p);
         ids.push_back(-1);
         track_cnt.push_back(1);
@@ -93,7 +93,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
     if (EQUALIZE) {
         // 图像太暗或者太亮，提特征点比较难，所以均衡化一下;
         // 1、自适应局部直方图图像均衡化预处理--createCLAHE；增强对比度；主要思想是将图像的直方图分布变成近似均匀分布
-        cv::Ptr <cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         TicToc t_c;
         clahe->apply(_img, img);
         ROS_DEBUG("CLAHE costs: %fms", t_c.toc());
@@ -101,8 +101,8 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
         img = _img;
 
     // 这里forw表示当前，cur表示上一帧
-    if (forw_img.empty())   // 第一次输入图像，prev_img这个没用
-    {
+    if (forw_img.empty()) {  // 第一次输入图像，prev_img这个没用
+
         prev_img = cur_img = forw_img = img;
     } else {
         forw_img = img;
@@ -110,10 +110,10 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
 
     forw_pts.clear();
 
-    if (cur_pts.size() > 0) // 上一帧有特征点，就可以进行光流追踪了
-    {
+    if (cur_pts.size() > 0) { // 上一帧有特征点，就可以进行光流追踪了
+
         TicToc t_o;
-        vector <uchar> status;
+        vector<uchar> status;
         vector<float> err;
         // 调用opencv函数进行光流追踪
         // 2、光流追踪--calcOpticalFlowPyrLK 通过opencv光流追踪给的状态位剔除outlier；maxLevel=3 金字塔层数
@@ -132,7 +132,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time) {
         ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
     }
     // 被追踪到的是上一帧就存在的，因此追踪数+1
-    for (auto &n : track_cnt)
+    for (auto &n: track_cnt)
         n++;
 
     if (PUB_THIS_FRAME) {
@@ -185,7 +185,7 @@ void FeatureTracker::rejectWithF() {
     if (forw_pts.size() >= 8) {
         ROS_DEBUG("FM ransac begins");
         TicToc t_f;
-        vector <cv::Point2f> un_cur_pts(cur_pts.size()), un_forw_pts(forw_pts.size());
+        vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_forw_pts(forw_pts.size());
         for (unsigned int i = 0; i < cur_pts.size(); i++) {
             Eigen::Vector3d tmp_p;
             // 得到相机归一化坐标系的值
@@ -203,7 +203,7 @@ void FeatureTracker::rejectWithF() {
             un_forw_pts[i] = cv::Point2f(tmp_p.x(), tmp_p.y());
         }
 
-        vector <uchar> status;
+        vector<uchar> status;
         // opencv接口计算本质矩阵，某种意义也是一种对级约束的outlier剔除
         cv::findFundamentalMat(un_cur_pts, un_forw_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
         int size_a = cur_pts.size();
@@ -243,7 +243,7 @@ void FeatureTracker::readIntrinsicParameter(const string &calib_file) {
 
 void FeatureTracker::showUndistortion(const string &name) {
     cv::Mat undistortedImg(ROW + 600, COL + 600, CV_8UC1, cv::Scalar(0));
-    vector <Eigen::Vector2d> distortedp, undistortedp;
+    vector<Eigen::Vector2d> distortedp, undistortedp;
     for (int i = 0; i < COL; i++)
         for (int j = 0; j < ROW; j++) {
             Eigen::Vector2d a(i, j);
