@@ -32,7 +32,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-
+#define CV_GRAY2RGB cv::COLOR_GRAY2RGB
+#define CV_RGB2GRAY cv::COLOR_RGB2GRAY
 namespace DVision {
 
 /// BRIEF descriptor

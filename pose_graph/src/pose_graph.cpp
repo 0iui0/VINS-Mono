@@ -5,7 +5,7 @@ PoseGraph::PoseGraph() {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
     posegraph_visualization->setScale(0.1);
     posegraph_visualization->setLineWidth(0.01);
-    // 生成一个线程，该线程用于进行4自由度全局优化
+    // 闭环优化线程；生成一个线程，该线程用于进行4自由度全局优化
     t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
     // 初始化一些变量
     earliest_loop_index = -1;
@@ -70,6 +70,7 @@ void PoseGraph::addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop) {
     int loop_index = -1;
     if (flag_detect_loop) {
         TicToc tmp_t;
+        // 1。detectLoop DBoW找闭环帧
         loop_index = detectLoop(cur_kf, cur_kf->index);
     } else {
         addKeyFrameIntoVoc(cur_kf);
@@ -77,7 +78,7 @@ void PoseGraph::addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop) {
     if (loop_index != -1) {   // 代表找到了有效的回环帧
         //printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
         KeyFrame *old_kf = getKeyFrame(loop_index); // 得到回环帧的指针
-
+        // 2。findConnection 计算当前帧和闭环帧的相对位姿
         if (cur_kf->findConnection(old_kf)) { // 如果确定两者回环
 
             // 更新最早回环帧，用来确定全局优化的范围
@@ -129,6 +130,7 @@ void PoseGraph::addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop) {
                 // 代表这个序列已经跟之前的序列合并过了，这里实现的也就是一个序列的合并
                 sequence_loop[cur_kf->sequence] = 1;
             }
+            // 开启闭环优化
             m_optimize_buf.lock();
             optimize_buf.push(cur_kf->index);   // 相当于通知4dof优化线程开始干活
             m_optimize_buf.unlock();
@@ -414,6 +416,7 @@ void PoseGraph::optimize4DoF() {
         int cur_index = -1;
         int first_looped_index = -1;
         m_optimize_buf.lock();
+        // 1。检测是否闭环成功
         // 取出最新的形成回环的当前帧
         while (!optimize_buf.empty()) {
             cur_index = optimize_buf.front();
@@ -476,6 +479,7 @@ void PoseGraph::optimize4DoF() {
                 // 只有yaw角参与优化，成为参数块
                 problem.AddParameterBlock(euler_array[i], 1, angle_local_parameterization);
                 problem.AddParameterBlock(t_array[i], 3);
+                // 2。固定最老的闭环帧
                 // 最早回环帧以及加载进来的地图保持不变，不进行优化
                 if ((*it)->index == first_looped_index || (*it)->sequence == 0) {
                     problem.SetParameterBlockConstant(euler_array[i]);
@@ -483,6 +487,7 @@ void PoseGraph::optimize4DoF() {
                 }
 
                 //add edge
+                // 3。添加序列边
                 // 建立约束，每一帧和之前5帧建立约束关系，找到这一帧前面5帧，并且需要他们是一个序列中的KF
                 for (int j = 1; j < 5; j++) {
                     if (i - j >= 0 && sequence_array[i] == sequence_array[i - j]) {
@@ -505,6 +510,7 @@ void PoseGraph::optimize4DoF() {
                 }
 
                 //add loop edge
+                // 4。添加闭环边
                 // 如果这一帧有回环帧
                 if ((*it)->has_loop) {
                     assert((*it)->loop_index >= first_looped_index);

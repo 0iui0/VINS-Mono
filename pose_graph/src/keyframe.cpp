@@ -47,7 +47,9 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
     has_fast_point = false;
     loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
     sequence = _sequence;
+    // 提取已有点的描述子
     computeWindowBRIEFPoint();
+    // 提取新的Fast特征点和描述子
     computeBRIEFPoint();
     if (!DEBUG_IMAGE)
         image.release();
@@ -355,9 +357,8 @@ bool KeyFrame::findConnection(KeyFrame *old_kf) {
     }
 #endif
     //printf("search by des\n");
-    // 通过描述子来check
-    searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints,
-                     old_kf->keypoints_norm);
+    // 1。暴力匹配，通过描述子来check
+    searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints, old_kf->keypoints_norm);
     // 操作跟光流追踪类似，根据状态位进行筛选
     reduceVector(matched_2d_cur, status);    // 当前帧的像素坐标
     reduceVector(matched_2d_old, status);    // 回环帧的像素坐标
@@ -466,6 +467,7 @@ bool KeyFrame::findConnection(KeyFrame *old_kf) {
     // 判断匹配上的点数目大小够不够
     if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
         status.clear();
+        // 2。PnP计算闭环帧相对位姿
         // 进行PNP几何校验，利用当前帧的地图点（3d）和回环帧的归一化相机坐标（2d）进行计算
         PnPRANSAC(matched_2d_old_norm, matched_3d, status, PnP_T_old, PnP_R_old);
         // 根据状态位进行瘦身
@@ -538,6 +540,7 @@ bool KeyFrame::findConnection(KeyFrame *old_kf) {
         //printf("PNP relative\n");
         //cout << "pnp relative_t " << relative_t.transpose() << endl;
         //cout << "pnp relative_yaw " << relative_yaw << endl;
+        // 3。闭环帧位姿判断
         // 合理范围之内才认为有效
         if (abs(relative_yaw) < 30.0 && relative_t.norm() < 20.0) {
 

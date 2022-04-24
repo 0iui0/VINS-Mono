@@ -420,9 +420,10 @@ void process() {
 
                     //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
                 }
-                // 创建回环检测节点的KF
+                // 1. 创建回环检测节点的KF
                 KeyFrame *keyframe = new KeyFrame(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
                                                   point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
+                // 2. 闭环检测
                 m_process.lock();
                 start_flag = 1;
                 posegraph.addKeyFrame(keyframe, 1); // 回环检测核心入口函数
